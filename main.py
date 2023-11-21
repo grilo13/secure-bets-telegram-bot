@@ -1,6 +1,6 @@
 from typing import Final
 from telegram import Update
-from telegram.ext import ContextTypes, Application, CommandHandler, MessageHandler, filters
+from telegram.ext import ContextTypes, Application, CommandHandler, MessageHandler, filters, CallbackContext
 
 TOKEN: Final = '6490849011:AAFmcjual25C8xGMZ0aXBVRnkahVPCi2Lko'
 BOT_USERNAME: Final = '@SureBetsTheBot'
@@ -16,7 +16,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # Handle Responses
-
 def handle_response(text: str) -> str:
     processed: str = text.lower()
 
@@ -50,18 +49,41 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Update {update} caused error {context.error}")
 
 
+async def schedule_job(update: Update, context: CallbackContext) -> None:
+    # Get the chat ID
+    chat_id = update.message.chat_id
+
+    # Set up the job queue
+    job_queue = context.job_queue
+
+    # Schedule the job to run every 3 minutes
+    job_queue.run_repeating(job_callback, interval=180, first=0, chat_id=chat_id)
+
+    await update.message.reply_text('Job scheduled to run every 3 minutes.')
+
+
+async def job_callback(context: CallbackContext):
+    chat_id = context.job.chat_id
+
+    # Call your custom function
+    message_text = 'running from the oops they be callinggg'
+
+    # Send the message
+    await context.bot.send_message(chat_id=chat_id, text=message_text)
+
+
 if __name__ == '__main__':
     app = Application.builder().token(token=TOKEN).build()
 
     # Commands
     app.add_handler(CommandHandler('start', start_command))
     app.add_handler(CommandHandler('help', help_command))
+    app.add_handler(CommandHandler("schedule", schedule_job))
 
     # Messages
     app.add_handler(MessageHandler(filters.TEXT, handle_message))
 
     # Errors
     app.add_error_handler(error)
-
     print("Polls the bot...")
     app.run_polling(poll_interval=3)

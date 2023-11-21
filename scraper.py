@@ -39,21 +39,49 @@ class Scrapper:
                                                                                      class_='btools-match-teams').find(
                         'p').find('a')
 
+                    type_of_bet = div.find('div',class_='btools-match-teams').find('span').text.strip().split(" ")
+                    print("->{}<-".format(type_of_bet))
+
                     odds = div.find('div', class_='d-flex').find_all('div', class_='btools-odd-mini__value')
-                    print(odds)
+                    logos = div.find_all('div', class_='btools-odd-mini')
                     test_list = []
+                    logos_list = []
                     for odd in odds:
                         test_list.append(odd.find('span').text)
+
+                    for logo in logos:
+                        logos_list.append(get_logo_website(logo_url=logo.find('img').get('data-src')))
+
                     if teams_header and odds:
                         teams_list = teams_header.text.strip().splitlines()
                         teams_list = [part.strip() for part in teams_list]
+                        profit = div.find('span', class_='sure-bet-cta__inner').text.split("%")[0]
                         bet_object.update({'team1': {'name': teams_list[0],
-                                                     'odd': test_list[0]},
+                                                     'odd': test_list[0],
+                                                     'house': logos_list[0]},
                                            'team2': {'name': teams_list[-1],
-                                                     'odd': test_list[1]}})
+                                                     'odd': test_list[1],
+                                                     'house': logos_list[1]},
+                                           'type_of_bet': ' '.join(type_of_bet),
+                                           'profit': profit})
                     response.append(bet_object)
 
         return response
+
+
+def get_logo_website(logo_url: str) -> str:
+    if 'betano' in logo_url:
+        return 'betano'
+    elif '22bet' in logo_url:
+        return '22bet'
+    elif 'bwin' in logo_url:
+        return 'bwin'
+    elif 'betway' in logo_url:
+        return 'betway'
+    elif 'betclic' in logo_url:
+        return 'betclic'
+    else:
+        return logo_url
 
 
 if __name__ == '__main__':
