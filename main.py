@@ -1,6 +1,9 @@
 from typing import Final
+
 from telegram import Update
 from telegram.ext import ContextTypes, Application, CommandHandler, MessageHandler, filters, CallbackContext
+
+from scraper import Scrapper
 
 TOKEN: Final = '6490849011:AAFmcjual25C8xGMZ0aXBVRnkahVPCi2Lko'
 BOT_USERNAME: Final = '@SureBetsTheBot'
@@ -13,6 +16,26 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Help command')
+
+
+async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    scrapper = Scrapper(website_url='https://oddspedia.com/br/apostas-certas')
+    betting_info = scrapper.check_website_status()
+
+    message = "Here are the latest betting details:\n\n"
+
+    for info in betting_info:
+        message += f"*Location:* {info['location']}\n"
+        message += f"*League:* {info['league']}\n"
+        message += f"*Date:* {info['date']}\n\n"
+        message += f"*{info['team1']['name']} ({info['team1']['house']}):* {info['team1']['odd']}\n"
+        message += f"*{info['team2']['name']} ({info['team2']['house']}):* {info['team2']['odd']}\n\n"
+        message += f"*Type of Bet:* {info['type_of_bet']}\n"
+        message += f"*Potential Profit:* {info['profit']}\n\n"
+
+        # Reply with the Markdown message
+        await update.message.reply_markdown(message)
+        message = ""
 
 
 # Handle Responses
@@ -59,14 +82,30 @@ async def schedule_job(update: Update, context: CallbackContext) -> None:
     # Schedule the job to run every 3 minutes
     job_queue.run_repeating(job_callback, interval=180, first=0, chat_id=chat_id)
 
-    await update.message.reply_text('Job scheduled to run every 3 minutes.')
+    scrapper = Scrapper(website_url='https://oddspedia.com/br/apostas-certas')
+    betting_info = scrapper.check_website_status()
+
+    message = "Here are the latest betting details:\n\n"
+
+    for info in betting_info:
+        message += f"*Location:* {info['location']}\n"
+        message += f"*League:* {info['league']}\n"
+        message += f"*Date:* {info['date']}\n\n"
+        message += f"*{info['team1']['name']} ({info['team1']['house']}):* {info['team1']['odd']}\n"
+        message += f"*{info['team2']['name']} ({info['team2']['house']}):* {info['team2']['odd']}\n\n"
+        message += f"*Type of Bet:* {info['type_of_bet']}\n"
+        message += f"*Potential Profit:* {info['profit']}\n\n"
+
+        # Reply with the Markdown message
+        await update.message.reply_markdown(message)
+        message = ""
 
 
 async def job_callback(context: CallbackContext):
     chat_id = context.job.chat_id
 
-    # Call your custom function
-    message_text = 'running from the oops they be callinggg'
+    scrapper = Scrapper(website_url='https://oddspedia.com/br/apostas-certas')
+    message_text = scrapper.check_website_status()
 
     # Send the message
     await context.bot.send_message(chat_id=chat_id, text=message_text)
@@ -78,6 +117,7 @@ if __name__ == '__main__':
     # Commands
     app.add_handler(CommandHandler('start', start_command))
     app.add_handler(CommandHandler('help', help_command))
+    app.add_handler(CommandHandler('test', test_command))
     app.add_handler(CommandHandler("schedule", schedule_job))
 
     # Messages
