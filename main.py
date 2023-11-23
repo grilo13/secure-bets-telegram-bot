@@ -1,6 +1,7 @@
 from typing import Final
 
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+
 from telegram.ext import ContextTypes, Application, CommandHandler, MessageHandler, filters, CallbackContext
 
 from scraper import Scrapper
@@ -25,16 +26,40 @@ async def test_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = "Here are the latest betting details:\n\n"
 
     for info in betting_info:
-        message += f"*Location:* {info['location']}\n"
-        message += f"*League:* {info['league']}\n"
-        message += f"*Date:* {info['date']}\n\n"
-        message += f"*{info['team1']['name']} ({info['team1']['house']}):* {info['team1']['odd']}\n"
-        message += f"*{info['team2']['name']} ({info['team2']['house']}):* {info['team2']['odd']}\n\n"
-        message += f"*Type of Bet:* {info['type_of_bet']}\n"
-        message += f"*Potential Profit:* {info['profit']}\n\n"
+        alert_title = "📊 *Betting Information Alert*"
+        if float(info['profit']) > 5.0:
+            alert_title = "🚀 *Very Good Opportunity Alert*"
 
+        # Create a Markdown message with information from the dictionary
+        message += f"{alert_title}\n\n"
+        message += f"💰 *Potential Profit:* {info['profit']}%\n"
+        message += f"📍 *Location:* {info['location']}\n"
+        message += f"🏆 *Competition:* {info['league']}\n"
+        message += f"📅 *Date:* {info['date']}\n\n"
+
+        # Type of bet
+        message += f"💼 *Type of Bet:* {info['type_of_bet']}\n\n"
+
+        # Team 1 information
+        message += f"👥 *Team 1:* {info['team1']['name']}\n"
+        message += f"💰 *Odd:* {info['team1']['odd']}\n"
+        message += f"🏠 *House:* [{info['team1']['house']}](https://www.example.com/)\n\n"
+        # Team 2 information
+        message += f"👥 *Team 2:* {info['team2']['name']}\n"
+        message += f"💰 *Odd:* {info['team2']['odd']}\n"
+        message += f"🏠 *House:* [{info['team2']['house']}](https://www.example.com/)\n"
+
+        """# Create inline keyboard buttons for each house
+        keyboard = [
+            [
+                InlineKeyboardButton(info['team1']['house'], url="https://www.example.com/"),
+                InlineKeyboardButton(info['team2']['house'], url="https://www.example.com/")
+            ]
+        ]"""
+
+        # reply_markup = InlineKeyboardMarkup(keyboard)
         # Reply with the Markdown message
-        await update.message.reply_markdown(message)
+        await update.message.reply_markdown(message)  # reply_markup=reply_markup)
         message = ""
 
 
